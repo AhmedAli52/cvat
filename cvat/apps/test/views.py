@@ -3,9 +3,12 @@
 # SPDX-License-Identifier: MIT
 
 from collections import Counter
+from pathlib import Path
 
 from django.db.models import Count
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.views import View
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -15,6 +18,7 @@ from cvat.apps.engine.models import LabeledImage, LabeledShape, LabeledTrack, Ta
 from cvat.apps.engine.permissions import TaskPermission
 
 ANNOTATION_MODELS = (LabeledShape, LabeledTrack, LabeledImage)
+PAGE = (Path(__file__).parent / "page.html").read_text()
 
 
 class AnnotationCountsView(APIView):
@@ -47,3 +51,8 @@ class AnnotationCountsView(APIView):
                 ],
             }
         )
+
+
+class AnnotationCountsPageView(View):
+    def get(self, request):
+        return HttpResponse(PAGE)

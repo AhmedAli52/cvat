@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annotation counts</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 24px; max-width: 900px; }
+  form { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+  input { width: 90px; padding: 6px; }
+  button { padding: 6px 12px; cursor: pointer; }
+  #status { margin: 16px 0; }
+  .error { color: #b00020; }
+  .row { display: grid; grid-template-columns: 160px 1fr 60px; gap: 8px; align-items: center; margin: 3px 0; font-size: 14px; }
+  .bar { background: #2563eb; height: 14px; border-radius: 2px; }
+  .count { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<h1>Annotations per class</h1>
+<form id="form">
+  <label for="task">Task ID</label>
+  <input id="task" type="number" min="1" required>
+  <button type="submit">Load</button>
+</form>
+<div id="status" role="status"></div>
+<div id="chart" aria-label="Annotation count per class"></div>
+<script>
+const form = document.getElementById("form");
+const input = document.getElementById("task");
+const statusEl = document.getElementById("status");
+const chart = document.getElementById("chart");
+
+const FAILURE_TEXT = {
+  401: "You are not logged in to CVAT.",
+  403: "You do not have access to this task.",
+  404: "Task not found.",
+};
+
+function setStatus(text, isError) {
+  statusEl.textContent = text;
+  statusEl.className = isError ? "error" : "";
+}
+
+function render(classes) {
+  chart.replaceChildren();
+  const max = Math.max(...classes.map((item) => item.count));
+  for (const item of classes) {
+    const row = document.createElement("div");
+    row.className = "row";
+    const name = document.createElement("span");
+    name.textContent = item.label;
+    const track = document.createElement("div");
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.style.width = `${(item.count / max) * 100}%`;
+    track.append(bar);
+    const count = document.createElement("span");
+    count.className = "count";
+    count.textContent = item.count;
+    row.append(name, track, count);
+    chart.append(row);
+  }
+}
+
+async function load(taskId) {
+  chart.replaceChildren();
+  setStatus("Loading...", false);
+  try {
+    const response = await fetch(`/api/test/tasks/${taskId}/annotation-counts`, {
+      credentials: "same-origin",
+    });
+    if (!response.ok) {
+      setStatus(FAILURE_TEXT[response.status] || `Request failed (HTTP ${response.status}).`, true);
+      return;
+    }
+    const data = await response.json();
+    if (!data.classes.length) {
+      setStatus("This task has no annotations yet.", false);
+      return;
+    }
+    setStatus(`${data.total} annotations in ${data.classes.length} classes`, false);
+    render(data.classes);
+  } catch {
+    setStatus("Could not reach the server. Check the connection and try again.", true);
+  }
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  history.replaceState(null, "", `?task_id=${input.value}`);
+  load(input.value);
+});
+
+const initial = new URLSearchParams(location.search).get("task_id");
+if (initial) {
+  input.value = initial;
+  load(initial);
+}
+</script>
+</body>
+</html>
