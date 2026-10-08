@@ -1,0 +1,5 @@
+# Runs cvat_server from the working tree instead of the code baked into the image.
+services:
+  cvat_server:
+    volumes:
+      - ./cvat:/opt/cvat/cvat:ro
