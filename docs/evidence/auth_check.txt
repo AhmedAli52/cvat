@@ -1,0 +1,4 @@
+no login:      HTTP 401
+admin:         HTTP 200
+viewer:        HTTP 403
+missing task:  HTTP 404
