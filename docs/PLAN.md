@@ -31,3 +31,12 @@ Items 8 and 9 (WebSocket updates and reconnect). Items 1 to 4 are the floor and 
 
 ## Branch note
 The fork only had `develop`. I created `main` at the cloned commit b52288c2b7f07184a0ddc6fb9b096ea7cebde9d4 so the pull request can target `main` of my own fork, as the assessment requires.
+
+## Changes during the work (written at 03:30 PKT)
+- Dataset: the full annotation file failed to import against a 500-image task, so I filtered it to those images (instances_val2017_500.json). The task also had no COCO labels, so I added them through the API. CVAT stores each polygon segment as its own shape, so 3541 COCO annotations became 3953 shapes.
+- Code delivery: the prebuilt image does not contain the test app, so docker-compose.source-mount.yml mounts the working tree into cvat_server.
+- Page: planned as a page in the web interface, built as a standalone page served by the test app (see decision record).
+- Reached: items 1 to 6. Not reached: item 7 (filter), items 8 and 9 (WebSocket and reconnect), as the plan allowed.
+
+## Decision record
+Took: a standalone page in the test app, served from the CVAT origin so it reuses the browser login, fetching a grouped database query. Rejected: a new page inside cvat-ui (React). Cost of rejecting it: the page is not part of the app's navigation or styling, so "a page in the web interface" is only partly met, and any live updates would have to live outside the app's state handling. I rejected it on a judgement about 8 GB of RAM and the time left, and did not measure a frontend build.
